@@ -9,5 +9,7 @@ public class GridPosition : MonoBehaviour
     private void OnMouseDown()
     {
         Logger.Info($"({_x}, {_y}) coord clicked.");
+
+        GameManager.Instance.ProcessInput(_x, _y);
     }
 }
