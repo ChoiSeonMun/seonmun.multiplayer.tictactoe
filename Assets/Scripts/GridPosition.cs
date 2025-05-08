@@ -1,12 +1,13 @@
 using UnityEngine;
 
-// ±â´É : ¸¶¿ì½º ¹öÆ°À» Unity ¾ÖÇÃ¸®ÄÉÀÌ¼Ç¿¡ Àü´ŞÇÑ´Ù.
+// ê¸°ëŠ¥ : ë§ˆìš°ìŠ¤ ë²„íŠ¼ì„ Unity ì• í”Œë¦¬ì¼€ì´ì…˜ì— ì „ë‹¬í•œë‹¤.
 public class GridPosition : MonoBehaviour
 {
+    [SerializeField] private int _x;
+    [SerializeField] private int _y;
 
     private void OnMouseDown()
     {
-        Debug.Log($"Clicked!");
+        Logger.Info($"({_x}, {_y}) coord clicked.");
     }
-
 }
