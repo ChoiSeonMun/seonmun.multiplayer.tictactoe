@@ -6,6 +6,7 @@ using UnityEngine;
 public class GameVisualManager : MonoBehaviour
 {
     [SerializeField] private GameObject _crossMarkerPrefab;
+    [SerializeField] private GameObject _circleMarkerPrefab;
 
     private void Start()
     {
@@ -22,7 +23,7 @@ public class GameVisualManager : MonoBehaviour
                 Instantiate(_crossMarkerPrefab, GetWorldPositionFromCoordinate(x, y), Quaternion.identity);
                 break;
             case SquareState.Circle:
-                
+                Instantiate(_circleMarkerPrefab, GetWorldPositionFromCoordinate(x, y), Quaternion.identity);
                 break;
             default:
                 Logger.Error($"잘못된 값이 입력되었습니다. {(int)boardState}");

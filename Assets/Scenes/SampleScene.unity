@@ -849,6 +849,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _crossMarkerPrefab: {fileID: 5191700092224049290, guid: 23ffec375a3eea84592fccdce7bbdaa2, type: 3}
+  _circleMarkerPrefab: {fileID: 1701953184717551459, guid: 3f1587f223116034fb5709b5fad2fa31, type: 3}
 --- !u!1 &1169102232
 GameObject:
   m_ObjectHideFlags: 0
