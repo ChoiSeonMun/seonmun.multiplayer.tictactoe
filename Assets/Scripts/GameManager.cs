@@ -9,6 +9,15 @@ public enum SquareState
     Circle
 }
 
+// O가 승자, X가 승자, 무승부, 아직 게임이 끝나지 않음
+public enum GameOverState
+{
+    NotOver,
+    Cross,
+    Circle,
+    Tie
+}
+
 /// <summary>
 /// 틱택토 게임을 진행한다. => 비즈니스 로직 => 핵심 모듈
 /// - 애플리케이션을 여러 계층(수준)으로 나눈다.
@@ -28,7 +37,7 @@ public class GameManager : MonoBehaviour
 
     // 출력을 위해서는 보드의 상태(칸의 좌표, 칸의 상태)가 변경됐다는 것을 알려야 한다.
     public event Action<int, int, SquareState> OnBoardChanged;
-
+    public event Action<GameOverState> OnGameEnded;
     
     public void PlayMarker(int x, int y)
     {
@@ -50,7 +59,7 @@ public class GameManager : MonoBehaviour
         _gameOverState = TestGameOver();
         if (_gameOverState != GameOverState.NotOver)
         {
-            Logger.Info($"{_gameOverState} is winner.");
+            OnGameEnded?.Invoke(_gameOverState);
             return;
         }
         
@@ -64,14 +73,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // O가 승자, X가 승자, 무승부, 아직 게임이 끝나지 않음
-    enum GameOverState
-    {
-        NotOver,
-        Cross,
-        Circle,
-        Tie
-    }
+    
 
     GameOverState TestGameOver()
     {
