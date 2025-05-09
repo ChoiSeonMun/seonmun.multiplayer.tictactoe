@@ -1,11 +1,5 @@
+using System;
 using UnityEngine;
-
-/// <summary>
-/// 틱택토 게임을 진행한다. => 비즈니스 로직 => 핵심 모듈
-/// - 애플리케이션을 여러 계층(수준)으로 나눈다.
-/// ㄴ 입출력과 가까울수록 저수준, 입출력과 멀어질수록 고수준
-/// ㄴ 저수준이 고수준에 의존하게 만들어야 한다.
-/// </summary>
 
 // 칸의 상태는 3가지이므로 열거형으로 나타낸다.
 public enum SquareState
@@ -15,11 +9,20 @@ public enum SquareState
     Circle
 }
 
+/// <summary>
+/// 틱택토 게임을 진행한다. => 비즈니스 로직 => 핵심 모듈
+/// - 애플리케이션을 여러 계층(수준)으로 나눈다.
+/// ㄴ 입출력과 가까울수록 저수준, 입출력과 멀어질수록 고수준
+/// ㄴ 저수준이 고수준에 의존하게 만들어야 한다.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     private SquareState[,] _board = new SquareState[3, 3];
+
+    // 출력을 위해서는 보드의 상태(칸의 좌표, 칸의 상태)가 변경됐다는 것을 알려야 한다.
+    public event Action<int, int, SquareState> OnBoardChanged;
 
     public void PlayMarker(int x, int y)
     {
@@ -30,6 +33,9 @@ public class GameManager : MonoBehaviour
         {
             Logger.Info($"{_board[line, 0]}, {_board[line, 1]}, {_board[line, 2]}");
         }
+
+        // 구독한 객체에게 보드의 상태가 바뀌었다는 것을 통지한다.
+        OnBoardChanged?.Invoke(x, y, SquareState.Cross);
     }
 
     private void Awake()
