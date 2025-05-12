@@ -25,7 +25,7 @@ public enum GameOverState
 /// ㄴ 입출력과 가까울수록 저수준, 입출력과 멀어질수록 고수준
 /// ㄴ 저수준이 고수준에 의존하게 만들어야 한다.
 /// </summary>
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour // NetworkBehaviour가 되어야지만 RPC 사용 가능
 {
     private void Start()
     {
@@ -48,7 +48,14 @@ public class GameManager : MonoBehaviour
     public event Action<int, int, SquareState> OnBoardChanged;
     public event Action<GameOverState> OnGameEnded;
     public event Action<SquareState> OnTurnChanged;
-    
+
+    // 서버 컴퓨터에 있는 프로세스만 이 메소드를 실행한다.
+    [Rpc(SendTo.Server)]
+    public void ReqValidatePlayMarkerRpc(int x, int y)
+    {
+        Logger.Info($"{nameof(ReqValidatePlayMarkerRpc)}: {x} {y}");
+    }
+
     public void PlayMarker(int x, int y)
     {
         if (_gameOverState != GameOverState.NotOver)
