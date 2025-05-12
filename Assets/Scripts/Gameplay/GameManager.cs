@@ -69,7 +69,7 @@ public class GameManager : NetworkBehaviour
     // 현재 턴
     // ㄴ 입력에 대해 이 데이터를 가지고 출력을 처리해야 한다.
     private NetworkVariable<SquareState> _currentTurnState = new();
-    private GameOverState _gameOverState = GameOverState.NotOver;
+    private NetworkVariable<GameOverState> _gameOverState = new();
     private SquareState _localPlayerType = SquareState.None; // 각 클라이언트의 구분
 
     // 출력을 위해서는 보드의 상태(칸의 좌표, 칸의 상태)가 변경됐다는 것을 알려야 한다.
@@ -77,20 +77,29 @@ public class GameManager : NetworkBehaviour
     public event Action<GameOverState> OnGameEnded;
     public event Action<SquareState> OnTurnChanged;
 
+    private bool CanPlayMarker(int x, int y, SquareState localPlayerType)
+    {
+
+        return _gameOverState.Value == GameOverState.NotOver &&
+            localPlayerType == _currentTurnState.Value &&
+            _board[y, x] == SquareState.None;
+
+    }
+
+
     // 서버 컴퓨터에 있는 프로세스만 이 메소드를 실행한다.
     [Rpc(SendTo.Server)]
     public void ReqValidatePlayMarkerRpc(int x, int y, SquareState localPlayerType)
     {
         Logger.Info($"{nameof(ReqValidatePlayMarkerRpc)}: {x}, {y}, {localPlayerType}");
 
-        // 유효성을 검증한다.
-        // ㄴ 현재 내 턴인가?
-        if (localPlayerType != _currentTurnState.Value)
+        if (false == CanPlayMarker(x, y, localPlayerType))
         {
             return;
         }
 
-        // 다음 턴으로 바꿔준다.
+        ChangeBoardStateRpc(x, y, localPlayerType);
+
         if (_currentTurnState.Value == SquareState.Cross)
         {
             _currentTurnState.Value = SquareState.Circle;
@@ -101,27 +110,22 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    [Rpc(SendTo.Everyone)]
+    public void ChangeBoardStateRpc(int x, int y, SquareState state)
+    {
+        _board[y, x] = state;
+        OnBoardChanged?.Invoke(x, y, state);
+    }
+
     public void PlayMarker(int x, int y)
     {
-        if (_localPlayerType == _currentTurnState.Value)
+        if (CanPlayMarker(x, y, _localPlayerType))
         {
             ReqValidatePlayMarkerRpc(x, y, _localPlayerType);
         }
 
-        //if (_gameOverState != GameOverState.NotOver)
-        //{
-        //    return;
-        //}
-
-        //if (_board[y, x] != SquareState.None)
-        //{
-        //    return;
-        //}
-
-        //_board[y, x] = _currentTurnState;
-
         //// 구독한 객체에게 보드의 상태가 바뀌었다는 것을 통지한다.
-        //OnBoardChanged?.Invoke(x, y, _currentTurnState);
+        //OnBoardC hanged?.Invoke(x, y, _currentTurnState);
 
         //_gameOverState = TestGameOver();
         //if (_gameOverState != GameOverState.NotOver)
@@ -129,7 +133,7 @@ public class GameManager : NetworkBehaviour
         //    OnGameEnded?.Invoke(_gameOverState);
         //    return;
         //}
-        
+
         //if (_currentTurnState == SquareState.Cross)
         //{
         //    _currentTurnState = SquareState.Circle;
