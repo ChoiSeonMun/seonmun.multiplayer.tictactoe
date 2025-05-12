@@ -25,14 +25,41 @@ public enum GameOverState
 /// ㄴ 입출력과 가까울수록 저수준, 입출력과 멀어질수록 고수준
 /// ㄴ 저수준이 고수준에 의존하게 만들어야 한다.
 /// </summary>
-public class GameManager : NetworkBehaviour // NetworkBehaviour가 되어야지만 RPC 사용 가능
+public class GameManager : NetworkBehaviour
 {
+    
     private void Start()
     {
+        // 값이 바뀔 때 TurnChagned가 Invoke 되어야 한다.
+        _currentTurnState.OnValueChanged += (previousState, newState) =>
+        {
+            OnTurnChanged?.Invoke(newState);
+        };
+
         NetworkManager.Singleton.OnConnectionEvent += (networkManager, connectionEventData) =>
         {
             Logger.Info($"Client {connectionEventData.ClientId} {connectionEventData.EventType}");
+
+            if (networkManager.ConnectedClients.Count == 2)
+            {
+                StartGame();
+            }
         };
+    }
+
+    public void StartGame()
+    {
+        if (IsHost)
+        {
+            _localPlayerType = SquareState.Cross;
+
+            // _currenTurnState의 쓰기 권한은 서버에게만 있다.
+            _currentTurnState.Value = SquareState.Cross;
+        }
+        else
+        {
+            _localPlayerType = SquareState.Circle;
+        }
     }
 
     public static GameManager Instance { get; private set; }
@@ -41,8 +68,9 @@ public class GameManager : NetworkBehaviour // NetworkBehaviour가 되어야지�
 
     // 현재 턴
     // ㄴ 입력에 대해 이 데이터를 가지고 출력을 처리해야 한다.
-    private SquareState _currentTurnState = SquareState.Cross;
+    private NetworkVariable<SquareState> _currentTurnState = new();
     private GameOverState _gameOverState = GameOverState.NotOver;
+    private SquareState _localPlayerType = SquareState.None; // 각 클라이언트의 구분
 
     // 출력을 위해서는 보드의 상태(칸의 좌표, 칸의 상태)가 변경됐다는 것을 알려야 한다.
     public event Action<int, int, SquareState> OnBoardChanged;
@@ -51,44 +79,66 @@ public class GameManager : NetworkBehaviour // NetworkBehaviour가 되어야지�
 
     // 서버 컴퓨터에 있는 프로세스만 이 메소드를 실행한다.
     [Rpc(SendTo.Server)]
-    public void ReqValidatePlayMarkerRpc(int x, int y)
+    public void ReqValidatePlayMarkerRpc(int x, int y, SquareState localPlayerType)
     {
-        Logger.Info($"{nameof(ReqValidatePlayMarkerRpc)}: {x} {y}");
+        Logger.Info($"{nameof(ReqValidatePlayMarkerRpc)}: {x}, {y}, {localPlayerType}");
+
+        // 유효성을 검증한다.
+        // ㄴ 현재 내 턴인가?
+        if (localPlayerType != _currentTurnState.Value)
+        {
+            return;
+        }
+
+        // 다음 턴으로 바꿔준다.
+        if (_currentTurnState.Value == SquareState.Cross)
+        {
+            _currentTurnState.Value = SquareState.Circle;
+        }
+        else if (_currentTurnState.Value == SquareState.Circle)
+        {
+            _currentTurnState.Value = SquareState.Cross;
+        }
     }
 
     public void PlayMarker(int x, int y)
     {
-        if (_gameOverState != GameOverState.NotOver)
+        if (_localPlayerType == _currentTurnState.Value)
         {
-            return;
+            ReqValidatePlayMarkerRpc(x, y, _localPlayerType);
         }
 
-        if (_board[y, x] != SquareState.None)
-        {
-            return;
-        }
+        //if (_gameOverState != GameOverState.NotOver)
+        //{
+        //    return;
+        //}
 
-        _board[y, x] = _currentTurnState;
+        //if (_board[y, x] != SquareState.None)
+        //{
+        //    return;
+        //}
 
-        // 구독한 객체에게 보드의 상태가 바뀌었다는 것을 통지한다.
-        OnBoardChanged?.Invoke(x, y, _currentTurnState);
+        //_board[y, x] = _currentTurnState;
 
-        _gameOverState = TestGameOver();
-        if (_gameOverState != GameOverState.NotOver)
-        {
-            OnGameEnded?.Invoke(_gameOverState);
-            return;
-        }
+        //// 구독한 객체에게 보드의 상태가 바뀌었다는 것을 통지한다.
+        //OnBoardChanged?.Invoke(x, y, _currentTurnState);
+
+        //_gameOverState = TestGameOver();
+        //if (_gameOverState != GameOverState.NotOver)
+        //{
+        //    OnGameEnded?.Invoke(_gameOverState);
+        //    return;
+        //}
         
-        if (_currentTurnState == SquareState.Cross)
-        {
-            _currentTurnState = SquareState.Circle;
-        }
-        else if (_currentTurnState == SquareState.Circle)
-        {
-            _currentTurnState = SquareState.Cross;
-        }
-        OnTurnChanged?.Invoke(_currentTurnState);
+        //if (_currentTurnState == SquareState.Cross)
+        //{
+        //    _currentTurnState = SquareState.Circle;
+        //}
+        //else if (_currentTurnState == SquareState.Circle)
+        //{
+        //    _currentTurnState = SquareState.Cross;
+        //}
+        //OnTurnChanged?.Invoke(_currentTurnState);
     }
 
     

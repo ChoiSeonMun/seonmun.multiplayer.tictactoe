@@ -9,7 +9,7 @@ public class HudUI : MonoBehaviour
     void Start()
     {
         _circleIndicatorArrow.SetActive(false);
-        _crossIndicatorArrow.SetActive(true);
+        _crossIndicatorArrow.SetActive(false);
 
         GameManager.Instance.OnTurnChanged += ChangeIndicator;
     }

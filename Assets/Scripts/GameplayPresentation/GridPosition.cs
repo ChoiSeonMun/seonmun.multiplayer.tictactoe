@@ -10,7 +10,6 @@ public class GridPosition : MonoBehaviour
     {
         Logger.Info($"({_x}, {_y}) coord clicked.");
 
-        GameManager.Instance.ReqValidatePlayMarkerRpc( _x, _y );
-        //GameManager.Instance.PlayMarker(_x, _y);
+        GameManager.Instance.PlayMarker(_x, _y);
     }
 }
