@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 // 칸의 상태는 3가지이므로 열거형으로 나타낸다.
@@ -26,6 +27,14 @@ public enum GameOverState
 /// </summary>
 public class GameManager : MonoBehaviour
 {
+    private void Start()
+    {
+        NetworkManager.Singleton.OnConnectionEvent += (networkManager, connectionEventData) =>
+        {
+            Logger.Info($"Client {connectionEventData.ClientId} {connectionEventData.EventType}");
+        };
+    }
+
     public static GameManager Instance { get; private set; }
 
     private SquareState[,] _board = new SquareState[3, 3];
